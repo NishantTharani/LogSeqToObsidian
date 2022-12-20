@@ -20,6 +20,9 @@ Install the Minimal theme, and then paste it in your snippets folder and enable 
 
 An basic Python script that converts LogSeq's markdown files to a style that plays nicer with Obsidian.
 
+Usage: `python convert_notes.py --logseq /path/to/logseq/graph --output /path/to/output/folder`
+Add the `--overwrite_output` flag if you want any existing folder at the output path to be overwritten 
+
 Known assumptions:
 * Dots in the logseq filename are assumed to indicate namespaces
 * `<` and `>` characters are assumed to be part of text, and therefore escaped so that they display correctly in Obsidian
