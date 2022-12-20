@@ -1,0 +1,7 @@
+update.zsh
+
+venv/**
+
+playground/**
+
+.DS_Store
