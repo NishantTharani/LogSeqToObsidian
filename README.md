@@ -18,7 +18,7 @@ Install the Minimal theme, and then paste it in your snippets folder and enable 
 
 ## `convert_notes.py`
 
-An basic Python script that converts LogSeq's markdown files to a style that plays nicer with Obsidian.
+A basic Python script that converts LogSeq's markdown files to a style that plays nicer with Obsidian.
 
 Usage: `python convert_notes.py --logseq /path/to/logseq/graph --output /path/to/output/folder`
 Add the `--overwrite_output` flag if you want any existing folder at the output path to be overwritten 
