@@ -72,6 +72,10 @@ def get_namespace_hierarchy(fname: str) -> list[str]:
     if len(split_by_pct) > 1:
         return split_by_pct
 
+    split_by_underscores = fname.split("___")
+    if len(split_by_underscores) > 1:
+        return split_by_underscores
+
     split_by_dot = fname.split('.')
     split_by_dot[-2] += '.' + split_by_dot[-1]
     split_by_dot.pop()
