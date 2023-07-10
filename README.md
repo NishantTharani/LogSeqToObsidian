@@ -25,6 +25,7 @@ A basic Python script that converts LogSeq's markdown files to a style that play
 Flags:
 
 - Add the `--overwrite_output` flag if you want any existing folder at the output path to be overwritten
+- Add the `--unindent_once` flag if you want all lines to be unindented once. If you do this, the base level of indentation will be paragraph-style text with no bullet points
 
 ### Further information
 
