@@ -9,5 +9,5 @@
 		  collapsed:: true
 			- Level 3
 	- Level 1.1
-- > Here is a quote related to dynamic programming
+- > Here is a quote related to dynamic programming (which will only convert to an obsidian quote if the bullet point is set to be removed)
 -

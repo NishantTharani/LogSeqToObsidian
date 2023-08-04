@@ -1,5 +1,6 @@
+title:: algorithms/dynamic programming
+
 - Dynamic programming is a thing
-  title:: algorithms/dynamic programming
 	- It is a thing that is real
 		- Real is that thing
 		- More things

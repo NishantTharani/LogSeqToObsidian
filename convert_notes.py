@@ -25,7 +25,7 @@ parser.add_argument(
     "--unindent_once",
     default=False,
     action="store_true",
-    help="unindents all lines once",
+    help="unindents all lines once - lines at the highest level will have their bullet point removed",
 )
 
 
@@ -46,7 +46,7 @@ def is_empty_markdown_file(fpath: str) -> bool:
     if not is_markdown_file(fpath):
         return False
 
-    with open(fpath, "r") as f:
+    with open(fpath, "r", encoding="utf-8", errors="replace") as f:
         lines = f.readlines()
         for line in lines:
             if not line.isspace():
@@ -66,13 +66,6 @@ def get_markdown_file_properties(fpath: str) -> tuple[dict, int]:
     """
 
     raise NotImplementedError()
-
-    # with open(fpath, 'r') as f:
-    #     lines = f.readlines()
-    #     n = len(lines)
-    #
-    #     # First check if front matter properties are present, and if so process them
-    #     front_matter_idxs = []
 
 
 def get_namespace_hierarchy(fname: str) -> list[str]:
@@ -393,7 +386,7 @@ for fname in os.listdir(old_pages):
 # Second loop: for each new file, reformat its content appropriately
 for fpath in new_paths:
     newlines = []
-    with open(fpath, "r") as f:
+    with open(fpath, "r", encoding="utf-8", errors="replace") as f:
         lines = f.readlines()
 
         # First replace the 'title:: my note' style of front matter with the Obsidian style (triple dashed)
