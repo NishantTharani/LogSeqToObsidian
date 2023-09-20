@@ -457,5 +457,5 @@ for fpath in new_paths:
 
             newlines.append(line)
 
-    with open(fpath, "w") as f:
+    with open(fpath, "w", encoding="utf-8") as f:
         f.writelines(newlines)
