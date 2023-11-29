@@ -290,6 +290,18 @@ def escape_lt_gt(line: str) -> str:
 
     return line
 
+def convert_todos(line: str) -> str:
+    """Escapes < and > characters"""
+    # Not if we're inside a code block
+    if INSIDE_CODE_BLOCK:
+        return line
+
+    line = re.sub(r"^- DONE", "- [X]", line)
+    line = re.sub(r"^- TODO", "- [ ]", line)
+
+    return line
+
+
 
 def add_bullet_before_indented_image(line: str) -> str:
     """If an image has been embedded on a new line created after shift+enter, it won't be indented in Obsidian"""
@@ -448,6 +460,9 @@ for fpath in new_paths:
 
             # Self-explanatory
             line = add_space_after_hyphen_that_ends_line(line)
+
+            # Self-explanatory
+            line = convert_todos(line)
 
             # < and > need to be escaped to show up as normal characters in Obsidian
             line = escape_lt_gt(line)
