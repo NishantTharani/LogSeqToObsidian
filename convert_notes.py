@@ -201,7 +201,7 @@ def update_assets(line: str, old_path: str, new_path: str):
             new_relpath = old_relpath
             # import ipdb; ipdb.set_trace()
 
-        if os.path.splitext(old_asset_path)[1].lower() in [".png", ".jpg"]:
+        if os.path.splitext(old_asset_path)[1].lower() in [".png", ".jpg", ".jpeg", ".gif"]:
             out.append("!")
         out.append("[" + name + "]")
         out.append("(" + new_relpath + ")")
