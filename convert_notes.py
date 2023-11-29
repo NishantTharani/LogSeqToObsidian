@@ -291,7 +291,6 @@ def escape_lt_gt(line: str) -> str:
     return line
 
 def convert_todos(line: str) -> str:
-    """Escapes < and > characters"""
     # Not if we're inside a code block
     if INSIDE_CODE_BLOCK:
         return line
@@ -300,8 +299,6 @@ def convert_todos(line: str) -> str:
     line = re.sub(r"^- TODO", "- [ ]", line)
 
     return line
-
-
 
 def add_bullet_before_indented_image(line: str) -> str:
     """If an image has been embedded on a new line created after shift+enter, it won't be indented in Obsidian"""
