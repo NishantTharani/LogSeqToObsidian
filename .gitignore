@@ -6,3 +6,4 @@ playground/**
 example/obsidian_output/**
 
 .DS_Store
+.vscode/launch.json
