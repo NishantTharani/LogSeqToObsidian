@@ -1,5 +1,7 @@
 # LogSeqToObsidian
 
+**This project forked from the original with changes noted below**
+
 LogSeq and Obsidian: are two (awesome) note taking tools.
 
 I: am a flawed human with a penchant for flitting between note taking apps.
@@ -37,12 +39,23 @@ Known assumptions:
 What this script does:
 
 - Creates a folder/subfolder hierarchy based on namespaces, copies notes appropriately, and updates links between notes
+  - Use `--ignore_dot_for_namespaces`, it will ignore the `.` character in determining namespaces
 - Links to notes that have not yet been created are replaced with tags
+  - Use the `--convert_tags_to_links` argument, it willl Convert `#[[long tags]]` to `[[long tags]]` links
 - Copies embedded assets into an 'attachments' subfolder under the given note. Resizes embedded images in Obsidian to match any resizing that was done in Logseq
 - Removes block links and block embeds
 - Converts front matter of the `title:: My Note` format to the format expected by Obsidian (`key: value` wrapped in triple-hyphen lines)
+- Use `--tag_prop_to_taglist` to convert a `tags:: [[list]] #of #[[tags with spaces]]` header into frontmatter with a `taglinks` property that is a list of links:
+   ```
+   Taglinks:
+  - [[list]]
+  - [[of]]
+  - "[[tags with spaces]]
+   ```
 - If a code block has been embedded inside a list, prepends a line - without this, the code block does not display correctly
 - Minor reformatting to prettify notes: escapes `<` and `>` characters, replaces 2-4 spaces with a tab, ignores Logseq artefacts like `collapsed:: true`
+- Use `--journal_dashes` to convert journal file entries from the format `Jan 2,2023.md` to the default Obsidian format `2023-01-02.md`
+- Any files found with a `%3A` in the name (html encoded colon character `:`) to a `.` character instead.
 
 What this script does not do:
 
