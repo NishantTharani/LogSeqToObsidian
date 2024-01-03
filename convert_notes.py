@@ -95,9 +95,10 @@ def get_namespace_hierarchy(fname: str) -> list[str]:
     """Given a markdown filename (not full path) representing a logseq page, returns a list representing the namespace
     hierarchy for that file
     Eg a file in the namespace "A/B/C" would return ['A', 'B', 'C.md']
-    Namespaces are detected in two ways:
-        "%2F" in the file name
-        If this is not present, dots in the filename
+    Namespaces are detected as follows ways:
+        Splitting by "%2F" in the file name
+        Splitting by "___" in the file name if the above is not present
+        Splitting by "." in the file name if the above is not present and the --ignore_dot_for_namespaces flag is not present
     """
     split_by_pct = fname.split("%2F")
     if len(split_by_pct) > 1:
@@ -154,7 +155,7 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
         line,
     )
 
-    # Replace #[[this type of tag]] with #this_type_of_tag
+    # Replace #[[this type of tag]] with #this_type_of_tag or [[this type of tag]] depending on args.convert_tags_to_links
     def fix_long_tag(match: re.Match):
         s = match[0]
 
@@ -168,6 +169,7 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
 
     line = re.sub(r"#\[\[.*?]]", fix_long_tag, line)
 
+    # Convert a 'short' #tag to a [[tag]] link, if args.convert_tags_to_links is true
     def convert_tag_to_link(match: re.Match):
         s = match[0]
 
@@ -184,9 +186,6 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
         s = match[0]
         s = s.replace("[", "")
         s = s.replace("]", "")
-
-        # if s.find(":") >= 0:
-        #     print("colon in link")
 
         # Or make it a tag if the page doesn't exist
         if s not in name_to_path:
