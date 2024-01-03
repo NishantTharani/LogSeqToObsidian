@@ -336,7 +336,9 @@ old_pagenames_to_new_paths = {}
 
 
 # First loop: copy files to their new location, populate the maps and list of paths
-assert os.path.exists(old_base) and os.path.isdir(old_base)
+
+if not os.path.exists(old_base) or not os.path.isdir(old_base):
+    raise ValueError(f"The directory '{old_base}' does not exist or is not a valid directory.")
 
 if args.overwrite_output and os.path.exists(new_base):
     shutil.rmtree(new_base)
