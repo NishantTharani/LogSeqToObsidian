@@ -27,7 +27,30 @@ parser.add_argument(
     action="store_true",
     help="unindents all lines once - lines at the highest level will have their bullet point removed",
 )
-
+parser.add_argument(
+    "--journal_dashes",
+    default=False,
+    action="store_true",
+    help="use dashes in daily journal - e.g. 2023-12-03.md",
+)
+parser.add_argument(
+    "--tag_prop_to_taglist",
+    default=False,
+    action="store_true",
+    help="convert tags in tags:: property to a list of tags in front matter",
+)
+parser.add_argument(
+    "--ignore_dot_for_namespaces",
+    default=False,
+    action="store_true",
+    help="ignore the use of '.' as a namespace character",
+)
+parser.add_argument(
+    "--convert_tags_to_links",
+    default=False,
+    action="store_true",
+    help="Convert #[[long tags]] to [[long tags]]",
+)
 
 # Global state isn't always bad mmkay
 ORIGINAL_LINE = ""
@@ -72,9 +95,10 @@ def get_namespace_hierarchy(fname: str) -> list[str]:
     """Given a markdown filename (not full path) representing a logseq page, returns a list representing the namespace
     hierarchy for that file
     Eg a file in the namespace "A/B/C" would return ['A', 'B', 'C.md']
-    Namespaces are detected in two ways:
-        "%2F" in the file name
-        If this is not present, dots in the filename
+    Namespaces are detected as follows ways:
+        Splitting by "%2F" in the file name
+        Splitting by "___" in the file name if the above is not present
+        Splitting by "." in the file name if the above is not present and the --ignore_dot_for_namespaces flag is not present
     """
     split_by_pct = fname.split("%2F")
     if len(split_by_pct) > 1:
@@ -84,14 +108,14 @@ def get_namespace_hierarchy(fname: str) -> list[str]:
     if len(split_by_underscores) > 1:
         return split_by_underscores
 
-    split_by_dot = fname.split(".")
-    split_by_dot[-2] += "." + split_by_dot[-1]
-    split_by_dot.pop()
-    if len(split_by_dot) > 1:
-        return split_by_dot
+    if not args.ignore_dot_for_namespaces:
+        split_by_dot = fname.split(".")
+        split_by_dot[-2] += "." + split_by_dot[-1]
+        split_by_dot.pop()
+        if len(split_by_dot) > 1:
+            return split_by_dot
 
     return [fname]
-
 
 def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
     """Given a line of a logseq page, updates any links and tags in it
@@ -119,6 +143,10 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
         month = match[1]
         date = match[2]
         year = match[4]
+
+        if len(date) == 1:
+            date = "0" + date
+
         return "[[" + year + "-" + month_map[month] + "-" + date + "]]"
 
     line = re.sub(
@@ -127,33 +155,55 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
         line,
     )
 
-    # Replace #[[this type of tag]] with #this_type_of_tag
+    # Replace #[[this type of tag]] with #this_type_of_tag or [[this type of tag]] depending on args.convert_tags_to_links
     def fix_long_tag(match: re.Match):
         s = match[0]
-        s = s.replace(" ", "_")
-        s = s.replace("[", "")
-        s = s.replace("]", "")
+
+        if args.convert_tags_to_links:
+            s = s.replace("#","")
+        else:
+            s = s.replace(" ", "_")
+            s = s.replace("[", "")
+            s = s.replace("]", "")
         return s
 
     line = re.sub(r"#\[\[.*?]]", fix_long_tag, line)
+
+    # Convert a 'short' #tag to a [[tag]] link, if args.convert_tags_to_links is true
+    def convert_tag_to_link(match: re.Match):
+        s = match[0]
+
+        if args.convert_tags_to_links:
+            s = s.replace("#","")
+            s = "[[{}]]".format(s)
+        
+        return s
+
+    line = re.sub(r"#\w+", convert_tag_to_link, line)
 
     # Replace [[This/Type/OfLink]] with [OfLink](../Type/OfLink) - for example
     def fix_link(match: re.Match):
         s = match[0]
         s = s.replace("[", "")
         s = s.replace("]", "")
+
         # Or make it a tag if the page doesn't exist
         if s not in name_to_path:
-            s = "#" + s
-            s = s.replace(" ", "_")
-            s = s.replace(",", "_")
-            return s
+            if args.convert_tags_to_links:
+                s = s.replace(":", ".")
+                return "[[" + s + "]]"
+            else:
+                s = "#" + s
+                s = s.replace(" ", "_")
+                s = s.replace(",", "_")
+                return s
         else:
             new_fpath = name_to_path[s]
             relpath = os.path.relpath(new_fpath, os.path.dirname(curr_path))
             relpath.replace(" ", "%20")  # Obsidian does this
+            relpath = fix_escapes(relpath)
             name = s.split("/")[-1]
-            s = "[" + name + "](" + relpath + ")"
+            s = "[" + name + "](" + relpath + ")"  # TOFIX We return the []() format of link here rather than [[]] format which we do elsewhere
             return s
 
     line = re.sub(r"\[\[.*?]]", fix_link, line)
@@ -322,6 +372,45 @@ def unindent_once(line: str) -> str:
 
     return line
 
+def fix_escapes(old_str: str) -> str:
+    """Given a filename, replace url escaped characters with an acceptable character for Obsidian filenames
+
+    :arg old_str old string
+    """
+    if old_str.find("%") < 0:
+        return old_str
+
+    replace_map = {
+        "%3A":".",
+    }
+
+    new_str = old_str
+
+    for escape_str in replace_map:
+        if new_str.find(escape_str) >= 0:
+            new_str = new_str.replace(escape_str,replace_map[escape_str])
+
+    return new_str
+
+def unencode_filenames_for_links(old_str: str) -> str:    
+    """Given a filename, replace url escaped characters with the normal character as it would appear in a link
+
+    :arg old_str old value
+    """
+    if old_str.find("%") < 0:
+        return old_str
+
+    replace_map = {
+        "%3A":":",
+    }
+
+    new_str = old_str
+
+    for escape_str in replace_map:
+        if new_str.find(escape_str) >= 0:
+            new_str = new_str.replace(escape_str,replace_map[escape_str])
+
+    return new_str
 
 args = parser.parse_args()
 
@@ -359,11 +448,20 @@ for fname in os.listdir(old_journals):
     if os.path.isfile(fpath):
         if not is_empty_markdown_file(fpath):
             new_fpath = os.path.join(new_journals, fname)
+            
+            if args.journal_dashes:
+                new_fpath = new_fpath.replace("_","-")
+
             shutil.copyfile(fpath, new_fpath)
             old_to_new_paths[fpath] = new_fpath
             new_to_old_paths[new_fpath] = fpath
             new_paths.add(new_fpath)
-            old_pagenames_to_new_paths[os.path.splitext(fname)[0]] = new_fpath
+
+            newfile = os.path.splitext(fname)[0]
+            old_pagenames_to_new_paths[newfile] = new_fpath
+
+            if args.journal_dashes:
+                old_pagenames_to_new_paths[newfile.replace("_","-")] = new_fpath
         else:
             pages_that_were_empty.add(fname)
 
@@ -382,6 +480,7 @@ for fname in os.listdir(old_pages):
             pages_that_were_empty.add(fname)
         else:
             new_fpath = os.path.join(new_base, *hierarchy)
+            new_fpath = fix_escapes(new_fpath)
             logging.info("Destination path: " + new_fpath)
             new_dirname = os.path.split(new_fpath)[0]
             os.makedirs(new_dirname, exist_ok=True)
@@ -389,10 +488,15 @@ for fname in os.listdir(old_pages):
             old_to_new_paths[fpath] = new_fpath
             new_to_old_paths[new_fpath] = fpath
             new_paths.add(new_fpath)
-            old_pagenames_to_new_paths[
-                os.path.splitext(hierarchical_pagename)[0]
-            ] = new_fpath
 
+            old_pagename = os.path.splitext(hierarchical_pagename)[0]
+            old_pagenames_to_new_paths[
+                old_pagename
+            ] = new_fpath
+            # Add mapping of unencoded filename for links
+            old_pagenames_to_new_paths[
+                unencode_filenames_for_links(old_pagename)
+            ] = new_fpath
 
 # Second loop: for each new file, reformat its content appropriately
 for fpath in new_paths:
@@ -415,7 +519,24 @@ for fpath in new_paths:
             # import ipdb; ipdb.set_trace()
             newlines.append("---\n")
             for key in front_matter:
-                newlines.append(key + ": " + front_matter[key] + "\n")
+                if (key.find("tags") >= 0 or key.find("Tags") >= 0) and args.tag_prop_to_taglist:
+                    # convert tags:: value1, #[[value 2]] 
+                    # to
+                    # taglinks: 
+                    #   - "[[value1]]"
+                    #   - "[[value 2]]"
+                    tags = front_matter[key].split(",")
+
+                    newlines.append("Taglinks:\n")
+                    for tag in tags:
+                        tag = tag.strip()
+                        clean_tag = tag.replace("#","")
+                        clean_tag = clean_tag.replace("[[","")
+                        clean_tag = clean_tag.replace("]]","")
+
+                        newlines.append('  - "[[' + clean_tag + ']]"' + "\n")
+                else:
+                    newlines.append(key + ": " + front_matter[key] + "\n")
             newlines.append("---\n")
 
         for line in lines[first_line_after_front_matter:]:
