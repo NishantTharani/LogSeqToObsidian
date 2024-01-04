@@ -28,6 +28,8 @@ Flags:
 - Add the `--unindent_once` flag if you want all lines to be unindented once. If you do this, the base level of indentation will be paragraph-style text with no bullet points
 - Add `--ignore_dot_for_namespaces` if you want to ignore the `.` character in determining namespace hierarchies - default behavior is to treat `.` characters in filenames as namespace delimiters in some cases
 - Add `--convert_tags_to_links` if you want to convert `#[[long tags]]` to `[[long tags]]` links and `#tags` to `[[tags]]` links - default behavior is to convert long tags to `#long_tags` tags and leave short tags alone
+- Add `--tag_prop_to_taglist` to convert front matter of the form `tags:: value1, #[[value 2]]` to `Taglinks:: [[value1]], [[value 2]]`. That is, the tags in the front matter will be converted to links and named 'Taglinks' instead of 'tags'
+- Add `--journal_dashes` if you want to use dashes in the filenames for journal pages, eg `2023-08-03.md` instead of `2023_08_03.md`
 
 ### Further information
 

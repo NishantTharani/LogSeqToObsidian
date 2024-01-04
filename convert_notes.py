@@ -203,15 +203,7 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
             relpath.replace(" ", "%20")  # Obsidian does this
             relpath = fix_escapes(relpath)
             name = s.split("/")[-1]
-            name = name.replace(":", ".")
-
-            s = "[[" + name + "]]"
-
-            # if relpath.find("/") < 0:
-            #     s = "[[" + name + "]]"
-            # else:
-            #     s = "[" + name + "](" + relpath + ")"
-
+            s = "[" + name + "](" + relpath + ")"  # TOFIX We return the []() format of link here rather than [[]] format which we do elsewhere
             return s
 
     line = re.sub(r"\[\[.*?]]", fix_link, line)
