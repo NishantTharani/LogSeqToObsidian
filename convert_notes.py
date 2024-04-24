@@ -4,6 +4,9 @@ import os
 import re
 import shutil
 import typing
+import requests
+# import requests
+from urllib.parse import urlparse
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
 
@@ -242,13 +245,23 @@ def update_assets(line: str, old_path: str, new_path: str):
         )
         new_asset_dir = os.path.dirname(new_asset_path)
         os.makedirs(new_asset_dir, exist_ok=True)
+
+        # Determine if the asset path is a web link
+        if is_web_link(old_asset_path):
+            # It's a web link, download the image
+            filename = download_image(old_asset_path, new_asset_dir)
+            if filename is not None: #img downloaded successfully
+                new_asset_path = os.path.join(new_asset_dir, filename)
+            else:
+                new_asset_path = old_relpath #will return OSError if opened, so is caught by exception
+                
         print("Old note path: " + old_path)
         print("Old asset path: " + old_asset_path)
         print("New asset path: " + new_asset_path)
         try:
             shutil.copyfile(old_asset_path, new_asset_path)
             new_relpath = os.path.relpath(new_asset_path, os.path.dirname(new_path))
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError):
             print(
                 "Warning: copying the asset from "
                 + old_asset_path
@@ -419,6 +432,23 @@ def unencode_filenames_for_links(old_str: str) -> str:
             new_str = new_str.replace(escape_str,replace_map[escape_str])
 
     return new_str
+
+def download_image(url: str, destination_folder: str) -> str:
+    """Download an image from a URL and save it to the specified destination folder"""
+    response = requests.get(url, stream=True)
+    if response.status_code == 200: #if link is not broken
+        filename = os.path.basename(url)
+        filepath = os.path.join(destination_folder, filename)
+        with open(filepath, 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
+    else:
+        return None
+    return filename
+
+def is_web_link(path: str) -> bool:
+    """Check if the path is a web link (URL)"""
+    parsed_url = urlparse(path)
+    return bool(parsed_url.scheme and parsed_url.netloc)
 
 args = parser.parse_args()
 
