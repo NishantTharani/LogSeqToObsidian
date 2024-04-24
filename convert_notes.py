@@ -5,7 +5,6 @@ import re
 import shutil
 import typing
 import requests
-# import requests
 from urllib.parse import urlparse
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
