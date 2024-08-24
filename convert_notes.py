@@ -221,6 +221,9 @@ def update_assets(line: str, old_path: str, new_path: str):
         out = []
         name = match[1]
         old_relpath = match[2]
+        if old_relpath[:8] == "https://" or old_relpath[:7] == "http://":
+            print("Warning: skipping asset " + old_relpath + " as it's a web link")
+            return match[0]
         if old_relpath[:8] == "file:///":
             old_relpath = old_relpath[7:]
 
