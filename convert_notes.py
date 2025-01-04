@@ -226,6 +226,15 @@ def update_assets(line: str, old_path: str, new_path: str):
 
         old_relpath = old_relpath.replace("%20", " ")
 
+        # Define the prefix to replace
+        prefix_to_replace = r"http://localhost/_capacitor_file_/storage/emulated/0/Logseq/assets/"
+        replacement_prefix = r"../assets/"
+
+        # Replace if old_relpath starts with the specified prefix
+        if old_relpath.startswith(prefix_to_replace):
+            new_relpath = old_relpath.replace(prefix_to_replace, replacement_prefix, 1)
+            old_relpath = new_relpath
+
         old_asset_path = os.path.normpath(
             os.path.join(os.path.dirname(old_path), old_relpath)
         )
@@ -250,7 +259,7 @@ def update_assets(line: str, old_path: str, new_path: str):
             )
             new_relpath = old_relpath
             # import ipdb; ipdb.set_trace()
-
+        new_relpath = new_relpath.replace("\\", "/")
         if os.path.splitext(old_asset_path)[1].lower() in [".png", ".jpg", ".jpeg", ".gif"]:
             out.append("!")
         out.append("[" + name + "]")
