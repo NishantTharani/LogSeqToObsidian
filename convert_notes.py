@@ -55,6 +55,7 @@ parser.add_argument(
 # Global state isn't always bad mmkay
 ORIGINAL_LINE = ""
 INSIDE_CODE_BLOCK = False
+alias_to_page = {}
 
 
 def is_markdown_file(fpath: str) -> bool:
@@ -87,8 +88,24 @@ def get_markdown_file_properties(fpath: str) -> tuple[dict, int]:
         title: test
         ---
     """
-
-    raise NotImplementedError()
+    properties = {}
+    first_line_after = 0
+    
+    with open(fpath, "r", encoding="utf-8", errors="replace") as f:
+        lines = f.readlines()
+        
+        # Check for Logseq-style properties (key:: value)
+        for idx, line in enumerate(lines):
+            match = re.match(r"(.*?)::[\s]*(.*)", line)
+            if match is not None:
+                key = match[1].strip()
+                value = match[2].strip()
+                properties[key] = value
+                first_line_after = idx + 1
+            else:
+                break
+                
+    return properties, first_line_after
 
 
 def get_namespace_hierarchy(fname: str) -> list[str]:
@@ -187,6 +204,16 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
         s = s.replace("[", "")
         s = s.replace("]", "")
 
+        # Check if this is an alias
+        if s in alias_to_page:
+            target_page = alias_to_page[s]
+            if target_page in name_to_path:
+                new_fpath = name_to_path[target_page]
+                relpath = os.path.relpath(new_fpath, os.path.dirname(curr_path))
+                relpath = relpath.replace(" ", "%20")  # Obsidian does this
+                relpath = fix_escapes(relpath)
+                return "[[" + target_page + "|" + s + "]]"
+
         # Or make it a tag if the page doesn't exist
         if s not in name_to_path:
             if args.convert_tags_to_links:
@@ -203,8 +230,7 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
             relpath = relpath.replace(" ", "%20")  # Obsidian does this
             relpath = fix_escapes(relpath)
             name = s.split("/")[-1]
-            s = "[" + name + "](" + relpath + ")"  # TOFIX We return the []() format of link here rather than [[]] format which we do elsewhere
-            return s
+            return "[[" + name + "]]"
 
     line = re.sub(r"\[\[.*?]]", fix_link, line)
 
@@ -506,45 +532,71 @@ for fname in os.listdir(old_pages):
                 unencode_filenames_for_links(old_pagename)
             ] = new_fpath
 
+# First build up alias mapping
+for fpath in new_paths:
+    properties, _ = get_markdown_file_properties(fpath)
+    if 'alias' in properties:
+        # Get the page name this alias points to
+        page_name = os.path.splitext(os.path.basename(fpath))[0]
+        # Split aliases on commas and map each to this page
+        aliases = [a.strip() for a in properties['alias'].split(',')]
+        for alias in aliases:
+            alias_to_page[alias] = page_name
+
 # Second loop: for each new file, reformat its content appropriately
 for fpath in new_paths:
     newlines = []
     with open(fpath, "r", encoding="utf-8", errors="replace") as f:
         lines = f.readlines()
 
-        # First replace the 'title:: my note' style of front matter with the Obsidian style (triple dashed)
+        # Get properties including any aliases
+        properties, first_line_after_front_matter = get_markdown_file_properties(fpath)
+        
+        # Start building new front matter
         front_matter = {}
-        in_front_matter = False
-        first_line_after_front_matter = 0
-        for idx, line in enumerate(lines):
-            match = re.match(r"(.*?)::[\s]*(.*)", line)
-            if match is not None:
-                front_matter[match[1]] = match[2]
-                first_line_after_front_matter = idx + 1
-            else:
-                break
-        if bool(front_matter):
-            # import ipdb; ipdb.set_trace()
-            newlines.append("---\n")
-            for key in front_matter:
+        
+        # Convert aliases if they exist
+        if 'alias' in properties:
+            # Split aliases on commas if multiple exist
+            aliases = [a.strip() for a in properties['alias'].split(',')]
+            front_matter['aliases'] = aliases
+            
+        # Handle other front matter properties
+        for key, value in properties.items():
+            if key != 'alias':  # Skip alias since we handled it specially
                 if (key.find("tags") >= 0 or key.find("Tags") >= 0) and args.tag_prop_to_taglist:
                     # convert tags:: value1, #[[value 2]] 
                     # to
                     # taglinks: 
                     #   - "[[value1]]"
                     #   - "[[value 2]]"
-                    tags = front_matter[key].split(",")
+                    tags = value.split(",")
 
-                    newlines.append("Taglinks:\n")
+                    front_matter['taglinks'] = []
                     for tag in tags:
                         tag = tag.strip()
                         clean_tag = tag.replace("#","")
                         clean_tag = clean_tag.replace("[[","")
                         clean_tag = clean_tag.replace("]]","")
 
-                        newlines.append('  - "[[' + clean_tag + ']]"' + "\n")
+                        front_matter['taglinks'].append('  - "[[' + clean_tag + ']]"')
                 else:
-                    newlines.append(key + ": " + front_matter[key] + "\n")
+                    front_matter[key] = value
+
+        # Write the new front matter
+        if bool(front_matter):
+            newlines.append("---\n")
+            for key, value in front_matter.items():
+                if key == 'aliases':
+                    newlines.append('aliases:\n')
+                    for alias in value:
+                        newlines.append(f'  - {alias}\n')
+                elif key == 'taglinks':
+                    newlines.append('taglinks:\n')
+                    for tag in value:
+                        newlines.append(f'  - {tag}\n')
+                else:
+                    newlines.append(f'{key}: {value}\n')
             newlines.append("---\n")
 
         for line in lines[first_line_after_front_matter:]:
