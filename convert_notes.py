@@ -297,8 +297,8 @@ def convert_spaces_to_tabs(line: str) -> str:
 
 
 def convert_empty_line(line: str) -> str:
-    """An empty line in logseq still starts with a hyphen"""
-    line = re.sub(r"^- *$", "", line)
+    """An empty line in logseq can still contain just  a hyphen"""
+    line = re.sub(r"^\s*-\s*$", "", line)
     return line
 
 
@@ -316,11 +316,11 @@ def prepend_code_block(line: str) -> list[str]:
     """
     out = []
 
-    match = re.match(r"(\t*)-[ *]```(\w+)", line)
+    match = re.match(r"(\t*)-[ *]```(\w*)", line)
     if match is not None:
         tabs = match[1]
         language_name = match[2]
-        out.append(tabs + "- " + language_name + " code block below:\n")
+        out.append(tabs + "- " + language_name + " ↓\n")
         out.append(tabs + "```" + language_name + "\n")
         INSIDE_CODE_BLOCK = True
         # import ipdb; ipdb.set_trace()
@@ -543,7 +543,7 @@ for fpath in new_paths:
             ORIGINAL_LINE = line
 
             # Update global state if this is the end of a code block
-            if INSIDE_CODE_BLOCK and line == "```\n":
+            if INSIDE_CODE_BLOCK and re.match("```",line):
                 INSIDE_CODE_BLOCK = False
 
             # Ignore if the line if it's a collapsed:: true line
