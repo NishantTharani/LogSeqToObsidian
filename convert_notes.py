@@ -543,7 +543,7 @@ for fpath in new_paths:
             ORIGINAL_LINE = line
 
             # Update global state if this is the end of a code block
-            if INSIDE_CODE_BLOCK and re.match("```",line):
+            if INSIDE_CODE_BLOCK and re.match(r"^```", line):
                 INSIDE_CODE_BLOCK = False
 
             # Ignore if the line if it's a collapsed:: true line
