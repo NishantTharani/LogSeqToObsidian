@@ -200,7 +200,7 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
         else:
             new_fpath = name_to_path[s]
             relpath = os.path.relpath(new_fpath, os.path.dirname(curr_path))
-            relpath.replace(" ", "%20")  # Obsidian does this
+            relpath = relpath.replace(" ", "%20")  # Obsidian does this
             relpath = fix_escapes(relpath)
             name = s.split("/")[-1]
             s = "[" + name + "](" + relpath + ")"  # TOFIX We return the []() format of link here rather than [[]] format which we do elsewhere
