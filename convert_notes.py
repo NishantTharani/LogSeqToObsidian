@@ -374,8 +374,14 @@ def convert_todos(line: str) -> str:
     if INSIDE_CODE_BLOCK:
         return line
 
-    line = re.sub(r"^- DONE", "- [X]", line)
-    line = re.sub(r"^- TODO", "- [ ]", line)
+    # Handle TODO/DONE items with any amount of indentation (tabs or spaces followed by -)
+    line = re.sub(r"^(\s*)- DONE", r"\1- [x]", line)
+    line = re.sub(r"^(\s*)- TODO", r"\1- [ ]", line)
+    
+    # Also handle NOW/LATER/DOING states commonly used in LogSeq
+    line = re.sub(r"^(\s*)- NOW", r"\1- [ ]", line)
+    line = re.sub(r"^(\s*)- LATER", r"\1- [ ]", line)
+    line = re.sub(r"^(\s*)- DOING", r"\1- [ ]", line)
 
     return line
 
