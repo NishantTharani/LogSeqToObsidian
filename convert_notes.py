@@ -51,6 +51,11 @@ parser.add_argument(
     action="store_true",
     help="Convert #[[long tags]] to [[long tags]]",
 )
+parser.add_argument(
+    "--assets_dir",
+    default="attachments",
+    help="Directory name for storing assets/attachments (default: attachments)",
+)
 
 # Global state isn't always bad mmkay
 ORIGINAL_LINE = ""
@@ -235,7 +240,7 @@ def update_links_and_tags(line: str, name_to_path: dict, curr_path: str) -> str:
 
 def update_assets(line: str, old_path: str, new_path: str):
     """Updates embedded asset links and copies the asset
-    Assets are copied to the 'attachments' subfolder under the same directory as new_path is in
+    Assets are copied to the assets subfolder (configurable via --assets_dir) under the same directory as new_path is in
     Images (.PNG, .JPG) are embedded. Everything else is linked to
     """
 
@@ -260,7 +265,7 @@ def update_assets(line: str, old_path: str, new_path: str):
             os.path.join(os.path.dirname(old_path), old_relpath)
         )
         new_asset_path = os.path.join(
-            os.path.dirname(new_path), "attachments", os.path.basename(old_asset_path)
+            os.path.dirname(new_path), args.assets_dir, os.path.basename(old_asset_path)
         )
         new_asset_dir = os.path.dirname(new_asset_path)
         os.makedirs(new_asset_dir, exist_ok=True)

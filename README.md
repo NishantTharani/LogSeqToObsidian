@@ -46,6 +46,7 @@ python convert_notes.py --logseq /path/to/logseq/graph --output /path/to/output/
 | `--convert_tags_to_links` | Convert `#[[long tags]]` to `[[long tags]]` and `#tags` to `[[tags]]` |
 | `--tag_prop_to_taglist` | Convert frontmatter tags to Taglinks format |
 | `--journal_dashes` | Use dashes in journal filenames (`2023-08-03.md` vs `2023_08_03.md`) |
+| `--assets_dir FOLDER` | Set custom folder name for assets (default: `attachments`) |
 
 ## What Gets Converted
 
