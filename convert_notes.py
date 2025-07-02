@@ -55,6 +55,7 @@ parser.add_argument(
 # Global state isn't always bad mmkay
 ORIGINAL_LINE = ""
 INSIDE_CODE_BLOCK = False
+CODE_BLOCK_INDENTATION = ""
 alias_to_page = {}
 
 
@@ -345,16 +346,29 @@ def prepend_code_block(line: str) -> list[str]:
     """
     out = []
 
-    match = re.match(r"(\t*)-[ *]```(\w*)", line)
+    match = re.match(r"(\t*)-\s```(\w*)", line)
     if match is not None:
         tabs = match[1]
         language_name = match[2]
         out.append(tabs + "- " + language_name + " ↓\n")
         out.append(tabs + "```" + language_name + "\n")
+        global INSIDE_CODE_BLOCK, CODE_BLOCK_INDENTATION
         INSIDE_CODE_BLOCK = True
-        # import ipdb; ipdb.set_trace()
+        CODE_BLOCK_INDENTATION = tabs
 
     return out
+
+
+def close_code_block(line: str) -> str:
+    """Handles closing code blocks - fixes indentation and updates global state"""
+    global INSIDE_CODE_BLOCK, CODE_BLOCK_INDENTATION
+    
+    if INSIDE_CODE_BLOCK and re.match(r"^(\s*)```", line):
+        INSIDE_CODE_BLOCK = False
+        # Fix the indentation to match the opening backticks
+        return CODE_BLOCK_INDENTATION + "```\n"
+    
+    return line
 
 
 def escape_lt_gt(line: str) -> str:
@@ -546,6 +560,11 @@ for fpath in new_paths:
 
 # Second loop: for each new file, reformat its content appropriately
 for fpath in new_paths:
+    # Reset global state for each file to ensure deterministic behavior
+    INSIDE_CODE_BLOCK = False
+    CODE_BLOCK_INDENTATION = ""
+    ORIGINAL_LINE = ""
+    
     newlines = []
     with open(fpath, "r", encoding="utf-8", errors="replace") as f:
         lines = f.readlines()
@@ -603,9 +622,8 @@ for fpath in new_paths:
         for line in lines[first_line_after_front_matter:]:
             ORIGINAL_LINE = line
 
-            # Update global state if this is the end of a code block
-            if INSIDE_CODE_BLOCK and re.match(r"^```", line):
-                INSIDE_CODE_BLOCK = False
+            # Handle closing code blocks and fix indentation
+            line = close_code_block(line)
 
             # Ignore if the line if it's a collapsed:: true line
             if is_collapsed_line(line):
