@@ -258,7 +258,7 @@ def update_assets(line: str, old_path: str, new_path: str):
 
         return "".join(out)
 
-    line = re.sub(r"!\[(.*?)]\((.*?)\)", fix_asset_embed, line)
+    line = re.sub(r"!\[(.*?)]\((?!https?://)(.*?)\)", fix_asset_embed, line)
 
     return line
 
