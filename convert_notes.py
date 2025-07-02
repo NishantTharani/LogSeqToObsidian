@@ -221,6 +221,14 @@ def update_assets(line: str, old_path: str, new_path: str):
         out = []
         name = match[1]
         old_relpath = match[2]
+        
+        # Skip data URLs - they're embedded images that don't need file copying
+        if old_relpath.startswith("data:"):
+            out.append("!")
+            out.append("[" + name + "]")
+            out.append("(" + old_relpath + ")")
+            return "".join(out)
+        
         if old_relpath[:8] == "file:///":
             old_relpath = old_relpath[7:]
 
