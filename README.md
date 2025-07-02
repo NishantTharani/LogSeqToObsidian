@@ -33,7 +33,11 @@ A Python script that converts LogSeq markdown files to Obsidian-compatible forma
 ## Usage
 
 ```bash
+# Basic conversion
 python convert_notes.py --logseq /path/to/logseq/graph --output /path/to/output/folder
+
+# Use custom assets folder (e.g., to merge with existing Obsidian assets)
+python convert_notes.py --logseq /path/to/logseq/graph --output /path/to/output/folder --assets_dir assets
 ```
 
 ### Command Line Options
@@ -54,7 +58,7 @@ python convert_notes.py --logseq /path/to/logseq/graph --output /path/to/output/
 
 - **Folder Structure**: Creates hierarchical folders based on LogSeq namespaces (dots in filenames)
 - **Links**: Updates internal links between notes and converts missing notes to tags
-- **Assets**: Copies embedded images/files to `attachments` subfolder with proper resizing
+- **Assets**: Copies embedded images/files to configurable assets folder (default: `attachments`) with proper resizing
 - **Frontmatter**: Converts LogSeq format (`title:: My Note`) to Obsidian YAML format
 - **Code Blocks**: Fixes formatting issues when code blocks appear in lists
 - **Journal Pages**: Converts date formats (with `--journal_dashes` flag)
