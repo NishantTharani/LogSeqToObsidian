@@ -82,11 +82,7 @@ def is_empty_markdown_file(fpath: str) -> bool:
 def get_markdown_file_properties(fpath: str) -> tuple[dict, int]:
     """Given a path to a markdown file, returns a dictionary of its properties and the index of the first line after the properties
 
-    Properties can either be in page property format: "title:: test"
-    Or in front matter format:
-        ---
-        title: test
-        ---
+    Properties are expected to be in page property format: "title:: test"
     """
     properties = {}
     first_line_after = 0
@@ -94,7 +90,6 @@ def get_markdown_file_properties(fpath: str) -> tuple[dict, int]:
     with open(fpath, "r", encoding="utf-8", errors="replace") as f:
         lines = f.readlines()
         
-        # Check for Logseq-style properties (key:: value)
         for idx, line in enumerate(lines):
             match = re.match(r"(.*?)::[\s]*(.*)", line)
             if match is not None:
