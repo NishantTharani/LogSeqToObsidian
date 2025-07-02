@@ -10,7 +10,7 @@ These: are a couple of files to help me migrate from LogSeq to Obsidian.
 
 ## `bonofix-snippet.css`
 
-A small CSS snippet to help Obsidian look more like a mix of the (LogSeq Bonofix Theme)[https://github.com/Sansui233/logseq-bonofix-theme] and Typora
+A small CSS snippet to help Obsidian look more like a mix of the [LogSeq Bonofix Theme](https://github.com/Sansui233/logseq-bonofix-theme) and Typora
 
 Install the Minimal theme, and then paste it in your snippets folder and enable it. Doesn't do much more than (what I consider) the basics - any contributions welcome.
 
